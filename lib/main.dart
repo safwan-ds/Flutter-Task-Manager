@@ -1,16 +1,48 @@
-import 'package:flutter/material.dart';
+import "dart:io";
 
-/// Flutter code sample for [NavigationRail].
+import "package:flutter/material.dart";
+import "package:shared_preferences/shared_preferences.dart";
+import "package:sqflite_common_ffi/sqflite_ffi.dart";
+import "package:task_manager/data/constants.dart";
+import "package:task_manager/data/notifiers.dart";
+import "package:task_manager/views/widget_tree.dart";
 
-void main() => runApp(const TaskManagerApp());
+void main() {
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+  print(Platform.operatingSystem);
+  runApp(const TaskManagerApp());
+}
 
 class TaskManagerApp extends StatelessWidget {
   const TaskManagerApp({super.key});
 
+  void initThemeMode() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    final bool? repeat = prefs.getBool(LocalConstants.themeModeKey);
+    isDarkModeNotifier.value = repeat ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: TaskManager(),
+    initThemeMode();
+
+    return ValueListenableBuilder(
+      valueListenable: isDarkModeNotifier,
+      builder: (BuildContext context, dynamic value, Widget? child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorSchemeSeed: Colors.teal,
+            brightness:
+                isDarkModeNotifier.value ? Brightness.dark : Brightness.light,
+            useMaterial3: true,
+          ),
+          home: const TaskManager(),
+        );
+      },
     );
   }
 }
@@ -23,161 +55,8 @@ class TaskManager extends StatefulWidget {
 }
 
 class _TaskManagerState extends State<TaskManager> {
-  int _selectedIndex = 0;
-  NavigationRailLabelType labelType = NavigationRailLabelType.all;
-  bool showLeading = false;
-  bool showTrailing = false;
-  double groupAlignment = -1.0;
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: <Widget>[
-          NavigationRail(
-            selectedIndex: _selectedIndex,
-            groupAlignment: groupAlignment,
-            onDestinationSelected: (int index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            labelType: labelType,
-            leading: showLeading
-                ? FloatingActionButton(
-                    elevation: 0,
-                    onPressed: () {
-                      // Add your onPressed code here!
-                    },
-                    child: const Icon(Icons.add),
-                  )
-                : const SizedBox(),
-            trailing: showTrailing
-                ? IconButton(
-                    onPressed: () {
-                      // Add your onPressed code here!
-                    },
-                    icon: const Icon(Icons.more_horiz_rounded),
-                  )
-                : const SizedBox(),
-            destinations: const <NavigationRailDestination>[
-              NavigationRailDestination(
-                icon: Icon(Icons.favorite_border),
-                selectedIcon: Icon(Icons.favorite),
-                label: Text('First'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.bookmark_border),
-                selectedIcon: Icon(Icons.book),
-                label: Text('Second'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.star_border),
-                selectedIcon: Icon(Icons.star),
-                label: Text('Third'),
-              ),
-            ],
-          ),
-          const VerticalDivider(thickness: 1, width: 1),
-          // This is the main content.
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text('selectedIndex: $_selectedIndex'),
-                const SizedBox(height: 20),
-                Text('Label type: ${labelType.name}'),
-                const SizedBox(height: 10),
-                OverflowBar(
-                  spacing: 10.0,
-                  children: <Widget>[
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          labelType = NavigationRailLabelType.none;
-                        });
-                      },
-                      child: const Text('None'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          labelType = NavigationRailLabelType.selected;
-                        });
-                      },
-                      child: const Text('Selected'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          labelType = NavigationRailLabelType.all;
-                        });
-                      },
-                      child: const Text('All'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Text('Group alignment: $groupAlignment'),
-                const SizedBox(height: 10),
-                OverflowBar(
-                  spacing: 10.0,
-                  children: <Widget>[
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          groupAlignment = -1.0;
-                        });
-                      },
-                      child: const Text('Top'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          groupAlignment = 0.0;
-                        });
-                      },
-                      child: const Text('Center'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          groupAlignment = 1.0;
-                        });
-                      },
-                      child: const Text('Bottom'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                OverflowBar(
-                  spacing: 10.0,
-                  children: <Widget>[
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          showLeading = !showLeading;
-                        });
-                      },
-                      child:
-                          Text(showLeading ? 'Hide Leading' : 'Show Leading'),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          showTrailing = !showTrailing;
-                        });
-                      },
-                      child: Text(
-                          showTrailing ? 'Hide Trailing' : 'Show Trailing'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return const WidgetTree();
   }
 }
