@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:task_manager/data/classes/task.dart";
+import "package:task_manager/data/constants.dart";
 import "package:task_manager/data/database_helper.dart";
 
 class DeleteTaskDialog extends StatelessWidget {
@@ -19,7 +20,7 @@ class DeleteTaskDialog extends StatelessWidget {
     return AlertDialog(
       icon: Icon(Icons.warning),
       iconColor: Theme.of(context).colorScheme.error,
-      title: Text("Are you sure?"),
+      title: Text(StringConstants.taskDeleteConfirm),
       content: Text(
         "This will delete ${task.title} task forever. Are you sure you want to delete this task forever?",
         textAlign: TextAlign.justify,
@@ -29,21 +30,24 @@ class DeleteTaskDialog extends StatelessWidget {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: Text("Cancel"),
+          child: Text(StringConstants.cancel),
         ),
-        FilledButton(
+        TextButton(
           onPressed: () {
             dbHelper.deleteTask(task.id!);
             setState(() {});
             Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Deleted task ${task.title}"),
+              ),
+            );
           },
           style: ButtonStyle(
-            backgroundColor:
-                WidgetStateProperty.all(Theme.of(context).colorScheme.error),
             foregroundColor:
-                WidgetStateProperty.all(Theme.of(context).colorScheme.onError),
+                WidgetStateProperty.all(Theme.of(context).colorScheme.error),
           ),
-          child: Text("Delete"),
+          child: Text(StringConstants.delete),
         ),
       ],
       actionsAlignment: MainAxisAlignment.end,

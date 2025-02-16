@@ -12,4 +12,6 @@ class LocalTextStyles {
   static TextStyle descText = TextStyle(
     fontSize: 16.0,
   );
+
+  static TextStyle noTasks = TextStyle(fontSize: 20.0);
 }

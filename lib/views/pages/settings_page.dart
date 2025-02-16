@@ -122,7 +122,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("Snackbar"),
-                          duration: Duration(milliseconds: 500),
                           behavior: SnackBarBehavior.floating,
                         ),
                       );

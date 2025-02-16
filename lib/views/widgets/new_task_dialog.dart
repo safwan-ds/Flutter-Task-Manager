@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:task_manager/data/classes/task.dart";
+import "package:task_manager/data/constants.dart";
 import "package:task_manager/data/database_helper.dart";
 
 class NewTaskDialog extends StatefulWidget {
@@ -10,7 +11,7 @@ class NewTaskDialog extends StatefulWidget {
   });
 
   final DatabaseHelper dbHelper;
-  final Function setState;
+  final VoidCallback? setState;
 
   @override
   State<NewTaskDialog> createState() => _NewTaskDialogState();
@@ -28,7 +29,8 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
       context: context,
       initialDate: _selectedDate, // Set the initial date
       firstDate: DateTime.now(), // Set the earliest date the user can select
-      lastDate: DateTime(2101), // Set the latest date the user can select
+      lastDate: DateTime(
+          IntegerConstants.lastDate), // Set the latest date the user can select
     );
     if (pickedDate != null && pickedDate != _selectedDate) {
       setState(() {
@@ -40,18 +42,19 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("New Task"),
+      title: Text(StringConstants.newTask),
       content: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
         spacing: 10.0,
         children: [
           TextField(
+            autofocus: true,
             controller: _titleController,
             decoration: InputDecoration(
-              hintText: "Task's title",
+              hintText: StringConstants.taskTitle,
               border: OutlineInputBorder(),
-              errorText: _isEmpty ? "Title can't be empty" : null,
+              errorText: _isEmpty ? StringConstants.emptyError : null,
             ),
             onChanged: (value) {
               setState(() {
@@ -62,7 +65,7 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
           TextField(
             controller: _descController,
             decoration: InputDecoration(
-              hintText: "Task's description",
+              hintText: StringConstants.taskDescription,
               border: OutlineInputBorder(),
             ),
           ),
@@ -72,12 +75,13 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
             },
             title: Text(
               _selectedDate == null
-                  ? "No date selected"
+                  ? StringConstants.noDate
                   : "${_selectedDate!.toLocal()}".split(" ")[0],
               textAlign: TextAlign.center,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius:
+                  BorderRadius.circular(DoubleConstants.dateTileBorderRadius),
             ),
           ),
         ],
@@ -87,7 +91,7 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: Text("Cancel"),
+          child: Text(StringConstants.cancel),
         ),
         FilledButton(
           onPressed: () {
@@ -105,10 +109,10 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
                 createdAt: DateTime.now(),
               ),
             );
-            widget.setState(() {});
+            widget.setState!();
             Navigator.pop(context);
           },
-          child: Text("Add"),
+          child: Text(StringConstants.add),
         ),
       ],
     );

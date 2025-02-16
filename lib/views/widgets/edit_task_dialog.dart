@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:task_manager/data/classes/task.dart";
+import "package:task_manager/data/constants.dart";
 import "package:task_manager/data/database_helper.dart";
 
 class EditTaskDialog extends StatefulWidget {
@@ -7,11 +8,13 @@ class EditTaskDialog extends StatefulWidget {
     super.key,
     required this.task,
     required this.dbHelper,
+    required this.setStatePage,
     required this.setState,
   });
 
   final Task task;
   final DatabaseHelper dbHelper;
+  final Function setStatePage;
   final Function setState;
 
   @override
@@ -43,7 +46,8 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
       context: context,
       initialDate: _selectedDate, // Set the initial date
       firstDate: DateTime.now(), // Set the earliest date the user can select
-      lastDate: DateTime(2101), // Set the latest date the user can select
+      lastDate: DateTime(
+          IntegerConstants.lastDate), // Set the latest date the user can select
     );
     if (pickedDate != null && pickedDate != _selectedDate) {
       setState(() {
@@ -55,18 +59,18 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("New Task"),
+      title: Text(StringConstants.editTask),
       content: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         mainAxisSize: MainAxisSize.min,
-        spacing: 10.0,
+        spacing: DoubleConstants.formSpacing,
         children: [
           TextField(
             controller: _titleController,
             decoration: InputDecoration(
-              hintText: "Tasks's title",
+              hintText: StringConstants.taskTitle,
               border: OutlineInputBorder(),
-              errorText: _isEmpty ? "Title can't be empty" : null,
+              errorText: _isEmpty ? StringConstants.emptyError : null,
             ),
             onChanged: (value) {
               setState(() {
@@ -77,7 +81,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
           TextField(
             controller: _descController,
             decoration: InputDecoration(
-              hintText: "Tasks's description",
+              hintText: StringConstants.taskDescription,
               border: OutlineInputBorder(),
             ),
           ),
@@ -87,12 +91,13 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
             },
             title: Text(
               _selectedDate == null
-                  ? "No date selected"
+                  ? StringConstants.noDate
                   : "${_selectedDate!.toLocal()}".split(" ")[0],
               textAlign: TextAlign.center,
             ),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius:
+                  BorderRadius.circular(DoubleConstants.dateTileBorderRadius),
             ),
           ),
         ],
@@ -102,7 +107,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
           onPressed: () {
             Navigator.pop(context);
           },
-          child: Text("Cancel"),
+          child: Text(StringConstants.cancel),
         ),
         FilledButton(
           onPressed: () {
@@ -112,19 +117,20 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
               });
               return;
             }
-            widget.dbHelper.updateTask(
-              Task(
-                id: id,
-                title: _titleController.text,
-                description: _descController.text,
-                dueDate: _selectedDate,
-                createdAt: _createdAt,
-              ),
+            Task newTask = Task(
+              id: id,
+              title: _titleController.text,
+              description: _descController.text,
+              isCompleted: widget.task.isCompleted,
+              dueDate: _selectedDate,
+              createdAt: _createdAt,
             );
-            widget.setState(() {});
+            widget.dbHelper.updateTask(newTask);
+            widget.setStatePage(() {});
+            widget.setState(newTask);
             Navigator.pop(context);
           },
-          child: Text("Confirm"),
+          child: Text(StringConstants.save),
         ),
       ],
     );
