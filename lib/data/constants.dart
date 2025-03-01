@@ -12,6 +12,7 @@ class StringConstants {
   static const String delete = "Delete";
   static const String add = "Add";
   static const String save = "Save";
+  static const String confirm = "Confirm";
   static const String noTasks =
       "You have no tasks. Add a new one from the button below.";
   static const String newTask = "New Task";
@@ -26,6 +27,17 @@ class StringConstants {
   static const String dateFormatSameYear = "dd MMM";
   static const String complete = "Complete";
   static const String undone = "Undone";
+  static const String confirmComplete =
+      "Are you sure you want to complete the task?";
+  static const String confirmUndone =
+      "Are you sure you want to undone the task?";
+  static const String newCategory = "Add new category";
+  static const String priority = "Priority: ";
+  static const List<String> priorityLabels = [
+    "Low",
+    "Medium",
+    "High",
+  ];
 }
 
 class IntegerConstants {
@@ -35,6 +47,7 @@ class IntegerConstants {
 
 class DoubleConstants {
   // Doubles
+  static const double responsiveWidth = 640.0;
   static const double formSpacing = 10.0;
   static const double dateTileBorderRadius = 10.0;
   static const double tasksPageVerticalPadding = 5.0;

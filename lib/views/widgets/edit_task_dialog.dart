@@ -1,20 +1,22 @@
 import "package:flutter/material.dart";
 import "package:task_manager/data/classes/task.dart";
 import "package:task_manager/data/constants.dart";
-import "package:task_manager/data/database_helper.dart";
+import "package:task_manager/main.dart";
+import "package:task_manager/views/pages/tasks_page.dart";
+import "package:task_manager/views/widgets/task_form.dart";
+
+final GlobalKey<TaskFormState> taskFormKey = GlobalKey<TaskFormState>();
 
 class EditTaskDialog extends StatefulWidget {
   const EditTaskDialog({
     super.key,
     required this.task,
-    required this.dbHelper,
-    required this.setStatePage,
+    required this.widget,
     required this.setState,
   });
 
   final Task task;
-  final DatabaseHelper dbHelper;
-  final Function setStatePage;
+  final TasksPageState widget;
   final Function setState;
 
   @override
@@ -22,111 +24,70 @@ class EditTaskDialog extends StatefulWidget {
 }
 
 class _EditTaskDialogState extends State<EditTaskDialog> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
+  late TaskForm taskForm;
 
   int? id;
-  bool _isEmpty = false;
-  DateTime? _selectedDate;
   late DateTime _createdAt;
 
   @override
   void initState() {
     super.initState();
-    final Task task = widget.task;
-    id = task.id;
-    _titleController.text = task.title;
-    _descController.text = task.description;
-    _selectedDate = task.dueDate;
-    _createdAt = task.createdAt;
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate, // Set the initial date
-      firstDate: DateTime.now(), // Set the earliest date the user can select
-      lastDate: DateTime(
-          IntegerConstants.lastDate), // Set the latest date the user can select
+    taskForm = TaskForm(
+      key: taskFormKey,
+      selectedDate: widget.task.dueDate,
+      selectedPriority: widget.task.priority,
     );
-    if (pickedDate != null && pickedDate != _selectedDate) {
-      setState(() {
-        _selectedDate = pickedDate;
-      });
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final Task task = widget.task;
+      id = task.id;
+      taskFormKey.currentState?.titleController.text = task.title;
+      taskFormKey.currentState?.descController.text = task.description;
+      taskFormKey.currentState?.selectedDate = task.dueDate;
+      _createdAt = task.createdAt;
+      taskFormKey.currentState?.selectedCategoryId = task.categoryId;
+      taskFormKey.currentState?.selectedPriority = task.priority;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(StringConstants.editTask),
-      content: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        spacing: DoubleConstants.formSpacing,
-        children: [
-          TextField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              hintText: StringConstants.taskTitle,
-              border: OutlineInputBorder(),
-              errorText: _isEmpty ? StringConstants.emptyError : null,
-            ),
-            onChanged: (value) {
-              setState(() {
-                _isEmpty = false;
-              });
-            },
-          ),
-          TextField(
-            controller: _descController,
-            decoration: InputDecoration(
-              hintText: StringConstants.taskDescription,
-              border: OutlineInputBorder(),
-            ),
-          ),
-          ListTile(
-            onTap: () {
-              _selectDate(context);
-            },
-            title: Text(
-              _selectedDate == null
-                  ? StringConstants.noDate
-                  : "${_selectedDate!.toLocal()}".split(" ")[0],
-              textAlign: TextAlign.center,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(DoubleConstants.dateTileBorderRadius),
-            ),
-          ),
-        ],
-      ),
+      content: SingleChildScrollView(child: taskForm),
       actions: [
         TextButton(
           onPressed: () {
+            widget.widget.setState(() {
+              widget.widget.loadData = widget.widget.widget.loadData();
+            });
             Navigator.pop(context);
           },
           child: Text(StringConstants.cancel),
         ),
         FilledButton(
           onPressed: () {
-            if (_titleController.text.isEmpty) {
+            if (taskFormKey.currentState!.titleController.text.trim().isEmpty) {
               setState(() {
-                _isEmpty = _titleController.text.isEmpty;
+                taskFormKey.currentState!.isEmpty = true;
+                taskFormKey.currentState!.titleController.clear();
+                taskFormKey.currentState!.setState(() {});
               });
               return;
             }
             Task newTask = Task(
               id: id,
-              title: _titleController.text,
-              description: _descController.text,
+              title: taskFormKey.currentState!.titleController.text.trim(),
+              description: taskFormKey.currentState!.descController.text.trim(),
               isCompleted: widget.task.isCompleted,
-              dueDate: _selectedDate,
+              dueDate: taskFormKey.currentState!.selectedDate,
               createdAt: _createdAt,
+              categoryId: taskFormKey.currentState!.selectedCategoryId,
+              priority: taskFormKey.currentState!.selectedPriority,
             );
-            widget.dbHelper.updateTask(newTask);
-            widget.setStatePage(() {});
+            dbHelper.updateTask(newTask);
+            widget.widget.setState(() {
+              widget.widget.loadData = widget.widget.widget.loadData();
+            });
             widget.setState(newTask);
             Navigator.pop(context);
           },

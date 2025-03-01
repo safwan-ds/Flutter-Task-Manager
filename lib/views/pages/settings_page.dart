@@ -1,7 +1,7 @@
-import "dart:developer";
-
-import "package:flutter/cupertino.dart";
 import "package:flutter/material.dart";
+import "package:task_manager/data/constants.dart";
+import "package:task_manager/data/styles.dart";
+import "package:task_manager/main.dart";
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -26,150 +26,57 @@ class _SettingsPageState extends State<SettingsPage> {
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 10,
-            children: [
-              DropdownButton(
-                value: dropdownValue,
-                items: [
-                  DropdownMenuItem(
-                    value: "e1",
-                    child: Text("test 1"),
-                  ),
-                  DropdownMenuItem(
-                    value: "e2",
-                    child: Text("test 2"),
-                  ),
-                ],
-                onChanged: (String? value) {
-                  setState(() {
-                    dropdownValue = value;
-                  });
-                },
-              ),
-              TextField(
-                decoration: InputDecoration(border: OutlineInputBorder()),
-                controller: controller,
-                onEditingComplete: () {
-                  setState(() {});
-                },
-              ),
-              Text(controller.text),
-              Checkbox(
-                tristate: false,
-                value: isChecked,
-                onChanged: (bool? value) => setState(() {
-                  isChecked = value;
-                }),
-              ),
-              CheckboxListTile(
-                  tristate: false,
-                  title: Text("Test"),
-                  value: isChecked,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      isChecked = value;
-                    });
-                  }),
-              CupertinoSwitch(
-                value: isSwitched,
-                onChanged: (value) {
-                  setState(() {
-                    isSwitched = value;
-                  });
-                },
-              ),
-              SwitchListTile.adaptive(
-                title: Text("test"),
-                value: isSwitched,
-                onChanged: (value) {
-                  setState(() {
-                    isSwitched = value;
-                  });
-                },
-              ),
-              Slider(
-                label: "test",
-                min: 0.0,
-                max: 10.0,
-                divisions: 10,
-                value: sliderValue,
-                onChanged: (double value) {
-                  setState(() {
-                    sliderValue = value;
-                  });
-                  log(value.toString());
-                },
-              ),
-              Divider(),
-              InkWell(
-                splashColor: Colors.teal,
-                onTap: () => log("test"),
-                child: Container(
-                  width: double.infinity,
-                  height: 50,
-                  color: Colors.white12,
-                ),
-              ),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 8.0,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("Snackbar"),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                    child: Text("Snackbar test"),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AboutDialog();
-                        },
-                      );
-                    },
-                    child: Text("Dialog test"),
-                  ),
-                  TextButton(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10,
+              children: [
+                ElevatedButton(
+                    style: ButtonStyle(
+                      foregroundColor: WidgetStateProperty.all(
+                          Theme.of(context).colorScheme.error),
+                    ),
                     onPressed: () {
                       showDialog(
                         context: context,
                         builder: (context) {
                           return AlertDialog(
-                            title: Text("test"),
-                            content: Text("Alert content"),
+                            icon: Icon(Icons.warning),
+                            iconColor: Theme.of(context).colorScheme.error,
+                            title: Text(StringConstants.taskDeleteConfirm),
+                            content: Text(
+                              "This will delete all your tasks and categories forever!",
+                              textAlign: TextAlign.justify,
+                            ),
                             actions: [
-                              FilledButton(
+                              TextButton(
                                 onPressed: () {
                                   Navigator.pop(context);
                                 },
-                                child: Text("Close"),
+                                child: Text(StringConstants.cancel),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  await dbHelper.recreateDatabase(
+                                    await dbHelper.database,
+                                  );
+                                  if (context.mounted) Navigator.pop(context);
+                                  // TODO: make the pages reload after the reset
+                                },
+                                style:
+                                    getButtonStyle(context, ButtonTypes.danger),
+                                child: Text(StringConstants.delete),
                               ),
                             ],
+                            actionsAlignment: MainAxisAlignment.end,
                           );
                         },
                       );
                     },
-                    child: Text("Alert test"),
-                  ),
-                  OutlinedButton(
-                    onPressed: () {},
-                    child: Text("test"),
-                  ),
-                  CloseButton(),
-                  BackButton(),
-                ],
-              ),
-            ],
+                    child: Text("Delete all data")),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,91 +1,32 @@
 import "package:flutter/material.dart";
 import "package:task_manager/data/classes/task.dart";
 import "package:task_manager/data/constants.dart";
-import "package:task_manager/data/database_helper.dart";
+import "package:task_manager/main.dart";
+import "package:task_manager/views/pages/tasks_page.dart";
+import "package:task_manager/views/widgets/task_form.dart";
+
+final GlobalKey<TaskFormState> taskFormKey = GlobalKey<TaskFormState>();
 
 class NewTaskDialog extends StatefulWidget {
   const NewTaskDialog({
     super.key,
-    required this.dbHelper,
-    required this.setState,
+    required this.widget,
   });
 
-  final DatabaseHelper dbHelper;
-  final VoidCallback? setState;
+  final TasksPageState widget;
 
   @override
   State<NewTaskDialog> createState() => _NewTaskDialogState();
 }
 
 class _NewTaskDialogState extends State<NewTaskDialog> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descController = TextEditingController();
-
-  bool _isEmpty = false;
-  DateTime? _selectedDate;
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate, // Set the initial date
-      firstDate: DateTime.now(), // Set the earliest date the user can select
-      lastDate: DateTime(
-          IntegerConstants.lastDate), // Set the latest date the user can select
-    );
-    if (pickedDate != null && pickedDate != _selectedDate) {
-      setState(() {
-        _selectedDate = pickedDate;
-      });
-    }
-  }
+  TaskForm taskForm = TaskForm(key: taskFormKey);
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(StringConstants.newTask),
-      content: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        mainAxisSize: MainAxisSize.min,
-        spacing: 10.0,
-        children: [
-          TextField(
-            autofocus: true,
-            controller: _titleController,
-            decoration: InputDecoration(
-              hintText: StringConstants.taskTitle,
-              border: OutlineInputBorder(),
-              errorText: _isEmpty ? StringConstants.emptyError : null,
-            ),
-            onChanged: (value) {
-              setState(() {
-                _isEmpty = false;
-              });
-            },
-          ),
-          TextField(
-            controller: _descController,
-            decoration: InputDecoration(
-              hintText: StringConstants.taskDescription,
-              border: OutlineInputBorder(),
-            ),
-          ),
-          ListTile(
-            onTap: () {
-              _selectDate(context);
-            },
-            title: Text(
-              _selectedDate == null
-                  ? StringConstants.noDate
-                  : "${_selectedDate!.toLocal()}".split(" ")[0],
-              textAlign: TextAlign.center,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius:
-                  BorderRadius.circular(DoubleConstants.dateTileBorderRadius),
-            ),
-          ),
-        ],
-      ),
+      content: SingleChildScrollView(child: taskForm),
       actions: [
         TextButton(
           onPressed: () {
@@ -95,21 +36,30 @@ class _NewTaskDialogState extends State<NewTaskDialog> {
         ),
         FilledButton(
           onPressed: () {
-            if (_titleController.text.isEmpty) {
+            if (taskFormKey.currentState!.titleController.text.trim().isEmpty) {
               setState(() {
-                _isEmpty = _titleController.text.isEmpty;
+                taskFormKey.currentState!.isEmpty = true;
+                taskFormKey.currentState!.titleController.clear();
+                taskFormKey.currentState!.setState(() {});
               });
               return;
             }
-            widget.dbHelper.insertTask(
+            dbHelper.insertTask(
               Task(
-                title: _titleController.text,
-                description: _descController.text,
-                dueDate: _selectedDate,
+                title: taskFormKey.currentState!.titleController.text.trim(),
+                description:
+                    taskFormKey.currentState!.descController.text.trim(),
+                dueDate: taskFormKey.currentState!.selectedDate,
                 createdAt: DateTime.now(),
+                categoryId: taskFormKey.currentState!.selectedCategoryId,
+                priority: taskFormKey.currentState!.selectedPriority,
               ),
             );
-            widget.setState!();
+            widget.widget.setState(
+              () {
+                widget.widget.loadData = widget.widget.widget.loadData();
+              },
+            );
             Navigator.pop(context);
           },
           child: Text(StringConstants.add),

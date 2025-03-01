@@ -1,134 +1,86 @@
 import "package:fl_chart/fl_chart.dart";
 import "package:flutter/material.dart";
+import "package:task_manager/data/styles.dart";
+import "package:task_manager/main.dart";
+import "package:task_manager/views/widgets/task_card.dart";
 
-class StatisticsPage extends StatelessWidget {
+class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
 
   @override
+  State<StatisticsPage> createState() => _StatisticsPageState();
+}
+
+class _StatisticsPageState extends State<StatisticsPage> {
+  @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.all(30.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(show: true),
-                titlesData: FlTitlesData(show: false),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 7,
-                minY: 0,
-                maxY: 6,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      FlSpot(0, 3),
-                      FlSpot(1, 1),
-                      FlSpot(2, 4),
-                      FlSpot(3, 1),
-                      FlSpot(4, 2),
-                      FlSpot(5, 4),
-                      FlSpot(6, 1),
-                    ],
-                    isCurved: true,
-                    color: Theme.of(context).colorScheme.primary,
-                    dotData: FlDotData(show: false),
-                    belowBarData: BarAreaData(show: false),
-                  ),
-                ],
-              ),
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: dbHelper.getTaskCountPerCategory(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text(
+              "You have no categories to show",
+              style: LocalTextStyles.emptyPageText,
             ),
-          ),
-          Expanded(
-            child: PieChart(
-              PieChartData(
-                sections: [
-                  PieChartSectionData(
-                    value: 40,
-                    title: "Flutter",
-                    color: Colors.blue,
-                    radius: 50,
-                    titleStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                  PieChartSectionData(
-                    value: 30,
-                    title: "React",
-                    color: Colors.green,
-                    radius: 50,
-                    titleStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                  PieChartSectionData(
-                    value: 20,
-                    title: "Xamarin",
-                    color: Colors.red,
-                    radius: 50,
-                    titleStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                  PieChartSectionData(
-                    value: 10,
-                    title: "Ionic",
-                    color: Colors.orange,
-                    radius: 50,
-                    titleStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                ],
-                borderData: FlBorderData(show: false),
-                sectionsSpace: 0,
-                centerSpaceRadius: 40,
+          );
+        }
+
+        List<PieChartSectionData> data = snapshot.data!.asMap().entries.map(
+          (entry) {
+            int index = entry.key;
+            Map<String, dynamic> category = entry.value;
+
+            // Define a list of available colors
+            List<Color> availableColors = [
+              Colors.red,
+              Colors.blue,
+              Colors.green,
+              Colors.orange,
+              Colors.purple,
+              Colors.cyan,
+            ];
+
+            return PieChartSectionData(
+              color: availableColors[index % availableColors.length],
+              value: (category["taskCount"] as int).toDouble(),
+              title: category["categoryName"] as String,
+              radius: 150.0,
+            );
+          },
+        ).toList();
+        List<DetailsText> stats = snapshot.data!
+            .asMap()
+            .entries
+            .map((entry) => DetailsText(
+                title: entry.value["categoryName"] + ": ",
+                text: "${entry.value["taskCount"]} tasks"))
+            .toList();
+
+        return Padding(
+          padding: const EdgeInsets.all(30.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Column(
+                children: stats,
               ),
-            ),
-          ),
-          Expanded(
-            child: BarChart(
-              BarChartData(
-                gridData: FlGridData(show: true),
-                titlesData: FlTitlesData(show: true),
-                borderData: FlBorderData(show: true),
-                barGroups: [
-                  BarChartGroupData(x: 0, barRods: [
-                    BarChartRodData(toY: 8, color: Colors.blue),
-                  ]),
-                  BarChartGroupData(x: 1, barRods: [
-                    BarChartRodData(toY: 10, color: Colors.blue),
-                  ]),
-                  BarChartGroupData(x: 2, barRods: [
-                    BarChartRodData(toY: 14, color: Colors.blue),
-                  ]),
-                  BarChartGroupData(x: 3, barRods: [
-                    BarChartRodData(toY: 15, color: Colors.blue),
-                  ]),
-                  BarChartGroupData(x: 4, barRods: [
-                    BarChartRodData(toY: 13, color: Colors.blue),
-                  ]),
-                  BarChartGroupData(x: 5, barRods: [
-                    BarChartRodData(toY: 10, color: Colors.blue),
-                  ]),
-                  BarChartGroupData(
-                    x: 6,
-                    barRods: [
-                      BarChartRodData(toY: 8, color: Colors.blue),
-                    ],
+              Flexible(
+                child: PieChart(
+                  PieChartData(
+                    centerSpaceRadius: 0,
+                    sections: data,
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

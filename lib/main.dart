@@ -10,7 +10,7 @@ import "package:task_manager/data/database_helper.dart";
 // Global singleton instance of DatabaseHelper.
 final DatabaseHelper dbHelper = DatabaseHelper();
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Load saved theme mode
@@ -29,6 +29,9 @@ void main() {
   // Load the dark mode setting before running the app.
   initThemeMode();
 
+  final dbHelper = DatabaseHelper();
+  await dbHelper.validateDatabase();
+
   runApp(const TaskManagerApp());
 }
 
@@ -43,13 +46,13 @@ class TaskManagerApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
-            colorSchemeSeed: Colors.teal,
+            colorSchemeSeed: Colors.greenAccent,
             brightness:
                 isDarkModeNotifier.value ? Brightness.dark : Brightness.light,
             useMaterial3: true,
           ),
           // Pass the global dbHelper instance to the widget tree.
-          home: TaskManager(dbHelper: dbHelper),
+          home: TaskManager(),
         );
       },
     );
@@ -59,10 +62,7 @@ class TaskManagerApp extends StatelessWidget {
 class TaskManager extends StatefulWidget {
   const TaskManager({
     super.key,
-    required this.dbHelper,
   });
-
-  final DatabaseHelper dbHelper;
 
   @override
   State<TaskManager> createState() => _TaskManagerState();
@@ -72,6 +72,6 @@ class _TaskManagerState extends State<TaskManager> {
   @override
   Widget build(BuildContext context) {
     // Now WidgetTree (and its children) can access the same dbHelper instance.
-    return WidgetTree(dbHelper: widget.dbHelper);
+    return WidgetTree();
   }
 }

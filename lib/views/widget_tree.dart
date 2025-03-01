@@ -1,38 +1,52 @@
 import "package:flutter/material.dart";
 import "package:shared_preferences/shared_preferences.dart";
 import "package:task_manager/data/constants.dart";
-import "package:task_manager/data/database_helper.dart";
 import "package:task_manager/data/notifiers.dart";
+import "package:task_manager/data/styles.dart";
 import "package:task_manager/views/pages/statistics_page.dart";
 import "package:task_manager/views/pages/settings_page.dart";
 import "package:task_manager/views/pages/tasks_page.dart";
 import "package:task_manager/views/widgets/navbar.dart";
+import "package:task_manager/views/widgets/navrail.dart";
 import "package:task_manager/views/widgets/new_task_dialog.dart";
 
 final GlobalKey<TasksPageState> uncompletedTasksKey =
     GlobalKey<TasksPageState>();
 
-class WidgetTree extends StatelessWidget {
+class WidgetTree extends StatefulWidget {
   const WidgetTree({
     super.key,
-    required this.dbHelper,
   });
 
-  final DatabaseHelper dbHelper;
+  @override
+  State<WidgetTree> createState() => _WidgetTreeState();
+}
+
+class _WidgetTreeState extends State<WidgetTree> {
+  final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> pages = [
+    final List<Widget> pages = [
       TasksPage(
         key: uncompletedTasksKey,
         completed: false,
-        dbHelper: dbHelper,
       ),
       StatisticsPage(),
-      TasksPage(
-        key: const ValueKey("completed"),
-        completed: true,
-        dbHelper: dbHelper,
+      ListenableBuilder(
+        builder: (context, child) {
+          return TasksPage(
+            key: const ValueKey("completed"),
+            completed: true,
+          );
+        },
+        listenable: categoryDeleteNotifier,
       ),
     ];
     double screenWidth = MediaQuery.of(context).size.width;
@@ -40,9 +54,22 @@ class WidgetTree extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: selectedPageNotifier,
       builder: (context, int selectedPage, child) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_pageController.hasClients) {
+            _pageController.animateToPage(
+              selectedPage,
+              duration: Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
+        });
+
         return Scaffold(
           appBar: AppBar(
-            title: const Text(StringConstants.taskManager),
+            title: const Text(
+              StringConstants.taskManager,
+              style: LocalTextStyles.boldText,
+            ),
             centerTitle: false,
             actions: [
               IconButton(
@@ -81,64 +108,45 @@ class WidgetTree extends StatelessWidget {
               ),
             ],
           ),
-          bottomNavigationBar: screenWidth < 640
+          bottomNavigationBar: screenWidth < DoubleConstants.responsiveWidth
               ? NavBar(
                   selectedPage: selectedPage,
                 )
               : null,
           body: Row(
             children: [
-              if (screenWidth >= 640)
-                NavigationRail(
-                  labelType: NavigationRailLabelType.all,
-                  destinations: [
-                    NavigationRailDestination(
-                      icon: Icon(Icons.event_note_outlined),
-                      selectedIcon: Icon(Icons.event_note),
-                      label: Text(StringConstants.tasks),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.pie_chart_outline),
-                      selectedIcon: Icon(Icons.pie_chart),
-                      label: Text(StringConstants.statistics),
-                    ),
-                    NavigationRailDestination(
-                      icon: Icon(Icons.event_available_outlined),
-                      selectedIcon: Icon(Icons.event_available),
-                      label: Text(StringConstants.completed),
-                    ),
-                  ],
-                  selectedIndex: selectedPage,
-                  onDestinationSelected: (int selectedPage) {
-                    selectedPageNotifier.value = selectedPage;
-                  },
+              if (screenWidth >= DoubleConstants.responsiveWidth)
+                NavRail(
+                  selectedPage: selectedPage,
                 ),
-              Expanded(child: pages[selectedPage]),
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: NeverScrollableScrollPhysics(),
+                  children: pages,
+                ),
+              ),
             ],
           ),
           floatingActionButton: (selectedPage == 0)
               ? FloatingActionButton(
+                  // elevation: 0.0,
                   child: const Icon(Icons.add_task),
                   onPressed: () {
                     showDialog(
                       context: context,
                       builder: (context) {
                         return NewTaskDialog(
-                          dbHelper: dbHelper,
-                          // Here you can pass a callback to trigger a refresh if needed.
-                          setState: uncompletedTasksKey.currentState?.refresh,
+                          widget: uncompletedTasksKey.currentState!,
                         );
                       },
                     );
                   },
                 )
               : null,
-          drawer: selectedPage == 1 ? child : null,
+          // drawer: selectedPage == 1 ? child : null,
         );
       },
-      child: SafeArea(
-        child: const Drawer(),
-      ),
     );
   }
 }

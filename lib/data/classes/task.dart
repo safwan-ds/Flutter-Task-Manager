@@ -5,14 +5,18 @@ class Task {
   bool isCompleted;
   final DateTime? dueDate;
   final DateTime createdAt;
+  final int? categoryId;
+  final int? priority;
 
   Task({
     this.id,
     required this.title,
-    this.description = "",
+    required this.description,
     this.isCompleted = false,
     this.dueDate,
     required this.createdAt,
+    this.categoryId,
+    this.priority,
   });
 
   Map<String, dynamic> toMap() {
@@ -23,6 +27,8 @@ class Task {
       "isCompleted": isCompleted ? 1 : 0,
       "dueDate": dueDate?.toIso8601String(),
       "createdAt": createdAt.toIso8601String(),
+      "category_id": categoryId,
+      "priority": priority,
     };
   }
 
@@ -34,6 +40,8 @@ class Task {
       isCompleted: map["isCompleted"] == 1,
       dueDate: map["dueDate"] != null ? DateTime.parse(map["dueDate"]) : null,
       createdAt: DateTime.parse(map["createdAt"]),
+      categoryId: map["category_id"],
+      priority: map["priority"],
     );
   }
 }
